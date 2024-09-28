@@ -1,0 +1,13 @@
+regex
+tqdm
+diffusers
+transformers
+accelerate
+scipy
+xformers
+opencv-python
+git+https://github.com/facebookresearch/segment-anything.git
+pycocotools
+matplotlib
+onnxruntime
+onnx
