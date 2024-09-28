@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import requests
 import torch
 import copy
 import matplotlib.pyplot as plt
@@ -9,39 +8,20 @@ from diffusers import StableDiffusionInpaintPipeline, EulerDiscreteScheduler
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator
 import gradio as gr
 
-
-# Define the URL and the output path
-url = "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
-output_dir = "models"
-output_file = os.path.join(output_dir, "sam_vit_h_4b8939.pth")
-
-# Create the models directory if it doesn't exist
-os.makedirs(output_dir, exist_ok=True)
-
-# Download the file
-response = requests.get(url)
-if response.status_code == 200:
-    with open(output_file, 'wb') as f:
-        f.write(response.content)
-    print(f"Model weights downloaded to: {output_file}")
-else:
-    print(f"Failed to download model weights. Status code: {response.status_code}")
-
 # Configuration
 target_width, target_height = 512, 512
 model_dir = "stabilityai/stable-diffusion-2-inpainting"
 sam_checkpoint = "sam_vit_h_4b8939.pth"
-device = "cuda"
+device = "cpu"  # Change from 'cuda' to 'cpu'
 
 # Load models
 scheduler = EulerDiscreteScheduler.from_pretrained(model_dir, subfolder="scheduler")
 pipe = StableDiffusionInpaintPipeline.from_pretrained(
     model_dir,
     scheduler=scheduler,
-    revision="fp16",
-    torch_dtype=torch.float16
+    revision="fp32",  # Change to 'fp32' for CPU
+    torch_dtype=torch.float32  # Change to torch.float32 for CPU
 ).to(device)
-pipe.enable_xformers_memory_efficient_attention()
 
 sam = sam_model_registry["vit_h"](checkpoint=sam_checkpoint).to(device)
 
@@ -96,7 +76,7 @@ def generate_images(image, prompts):
     encoded_images = []
     for prompt in prompts:
         stable_diffusion_mask = Image.fromarray(masks[int(prompt)]['segmentation'])
-        generator = torch.Generator(device="cuda").manual_seed(77)
+        generator = torch.Generator(device="cpu").manual_seed(77)  # Change device to 'cpu'
         image_result = pipe(prompt=prompt, guidance_scale=7.5, num_inference_steps=60, generator=generator, image=source_image, mask_image=stable_diffusion_mask).images[0]
         encoded_images.append(image_result)
     
