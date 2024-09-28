@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import requests
 import torch
 import copy
 import matplotlib.pyplot as plt
@@ -7,6 +8,24 @@ from PIL import Image
 from diffusers import StableDiffusionInpaintPipeline, EulerDiscreteScheduler
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator
 import gradio as gr
+
+
+# Define the URL and the output path
+url = "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_h_4b8939.pth"
+output_dir = "models"
+output_file = os.path.join(output_dir, "sam_vit_h_4b8939.pth")
+
+# Create the models directory if it doesn't exist
+os.makedirs(output_dir, exist_ok=True)
+
+# Download the file
+response = requests.get(url)
+if response.status_code == 200:
+    with open(output_file, 'wb') as f:
+        f.write(response.content)
+    print(f"Model weights downloaded to: {output_file}")
+else:
+    print(f"Failed to download model weights. Status code: {response.status_code}")
 
 # Configuration
 target_width, target_height = 512, 512
